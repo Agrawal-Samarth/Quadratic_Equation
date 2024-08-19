@@ -1,0 +1,230 @@
+{% extends 'solver/base.html' %}
+
+{% block title %}Quadratic Equation Solver - Home{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1><i class="fas fa-calculator me-3"></i>Quadratic Equation Solver</h1>
+    <p>Solve quadratic equations and visualize their graphs with detailed mathematical analysis</p>
+</div>
+
+<!-- Equation Input Form -->
+<div class="form-container">
+    <h3 class="mb-4">
+        <i class="fas fa-edit me-2"></i>Enter Your Equation
+    </h3>
+    <p class="text-muted mb-4">Enter the coefficients for the quadratic equation <strong>ax² + bx + c = 0</strong></p>
+    
+    <form id="quadraticForm">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="a" class="form-label">
+                    <strong>Coefficient 'a'</strong> <span class="text-danger">*</span>
+                </label>
+                <input type="number" class="form-control" id="a" name="a" step="any" required 
+                       placeholder="e.g., 1" value="1">
+                <div class="form-text">Cannot be zero</div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="b" class="form-label">
+                    <strong>Coefficient 'b'</strong>
+                </label>
+                <input type="number" class="form-control" id="b" name="b" step="any" 
+                       placeholder="e.g., -5" value="-5">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="c" class="form-label">
+                    <strong>Coefficient 'c'</strong>
+                </label>
+                <input type="number" class="form-control" id="c" name="c" step="any" 
+                       placeholder="e.g., 6" value="6">
+            </div>
+        </div>
+        
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-play me-2"></i>Solve Equation
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Loading Indicator -->
+<div class="loading" id="loading">
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Solving...</span>
+    </div>
+    <p class="mt-3">Solving your equation and generating visualization...</p>
+</div>
+
+<!-- Results Container -->
+<div class="result-container" id="results">
+    <h3 class="mb-4">
+        <i class="fas fa-chart-line me-2"></i>Results
+    </h3>
+    
+    <!-- Equation Display -->
+    <div class="result-item">
+        <h5><i class="fas fa-equals me-2"></i>Equation</h5>
+        <p class="mb-0" id="equationDisplay"></p>
+    </div>
+    
+    <!-- Mathematical Analysis -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="result-item">
+                <h5><i class="fas fa-info-circle me-2"></i>Discriminant</h5>
+                <p class="mb-0" id="discriminantDisplay"></p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="result-item">
+                <h5><i class="fas fa-sitemap me-2"></i>Nature of Roots</h5>
+                <p class="mb-0" id="rootsTypeDisplay"></p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="result-item">
+                <h5><i class="fas fa-arrow-up me-2"></i>Direction</h5>
+                <p class="mb-0" id="directionDisplay"></p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="result-item">
+                <h5><i class="fas fa-crosshairs me-2"></i>Vertex</h5>
+                <p class="mb-0" id="vertexDisplay"></p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Roots -->
+    <div class="result-item">
+        <h5><i class="fas fa-root me-2"></i>Roots</h5>
+        <div id="rootsDisplay"></div>
+    </div>
+    
+    <!-- Graph -->
+    <div class="plot-container" id="plotContainer">
+        <h5 class="mb-3"><i class="fas fa-chart-area me-2"></i>Graph</h5>
+        <img id="plotImage" src="" alt="Quadratic equation graph" style="display: none;">
+    </div>
+</div>
+
+<!-- Recent Equations -->
+{% if recent_equations %}
+<div class="form-container">
+    <h3 class="mb-4">
+        <i class="fas fa-clock me-2"></i>Recent Equations
+    </h3>
+    <div class="row">
+        {% for equation in recent_equations %}
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">{{ equation.get_equation_string }}</h6>
+                    <p class="card-text small text-muted">
+                        {{ equation.get_roots_type }}<br>
+                        <small>{{ equation.created_at|date:"M d, Y H:i" }}</small>
+                    </p>
+                    <a href="{% url 'solver:detail' equation.id %}" class="btn btn-sm btn-outline-primary">
+                        View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#quadraticForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Show loading
+        $('#loading').show();
+        $('#results').hide();
+        
+        // Get form data
+        var formData = {
+            'a': $('#a').val(),
+            'b': $('#b').val(),
+            'c': $('#c').val(),
+            'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+        };
+        
+        // Send AJAX request
+        $.ajax({
+            url: '',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    displayResults(response);
+                } else {
+                    showError(response.error);
+                }
+            },
+            error: function(xhr) {
+                var errorMsg = 'An error occurred while solving the equation.';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                showError(errorMsg);
+            },
+            complete: function() {
+                $('#loading').hide();
+            }
+        });
+    });
+    
+    function displayResults(data) {
+        // Update displays
+        $('#equationDisplay').text(data.equation);
+        $('#discriminantDisplay').text(data.discriminant.toFixed(6));
+        $('#rootsTypeDisplay').text(data.roots_type);
+        $('#directionDisplay').text('Opens ' + data.direction);
+        $('#vertexDisplay').text('(' + data.vertex[0].toFixed(6) + ', ' + data.vertex[1].toFixed(6) + ')');
+        
+        // Display roots
+        var rootsHtml = '';
+        data.roots.forEach(function(root, index) {
+            if (typeof root === 'object' && root.real !== undefined) {
+                if (root.imag === 0) {
+                    rootsHtml += '<p class="mb-1">Root ' + (index + 1) + ': ' + root.real.toFixed(6) + '</p>';
+                } else {
+                    rootsHtml += '<p class="mb-1">Root ' + (index + 1) + ': ' + root.real.toFixed(6) + ' + ' + root.imag.toFixed(6) + 'i</p>';
+                }
+            } else {
+                rootsHtml += '<p class="mb-1">Root ' + (index + 1) + ': ' + root.toFixed(6) + '</p>';
+            }
+        });
+        $('#rootsDisplay').html(rootsHtml);
+        
+        // Display plot
+        if (data.plot) {
+            $('#plotImage').attr('src', 'data:image/png;base64,' + data.plot).show();
+        }
+        
+        // Show results
+        $('#results').show();
+        
+        // Scroll to results
+        $('html, body').animate({
+            scrollTop: $('#results').offset().top - 100
+        }, 500);
+    }
+    
+    function showError(message) {
+        alert('Error: ' + message);
+    }
+});
+</script>
+{% endblock %}
