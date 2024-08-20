@@ -1,0 +1,113 @@
+{% extends 'solver/base.html' %}
+
+{% block title %}{{ equation.get_equation_string }} - Details{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1><i class="fas fa-info-circle me-3"></i>Equation Details</h1>
+    <p>Complete analysis of the quadratic equation</p>
+</div>
+
+<div class="form-container">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Equation Display -->
+            <div class="result-item mb-4">
+                <h3><i class="fas fa-equals me-2"></i>Equation</h3>
+                <h4 class="text-primary">{{ equation.get_equation_string }}</h4>
+            </div>
+            
+            <!-- Mathematical Analysis -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="result-item">
+                        <h5><i class="fas fa-info-circle me-2"></i>Discriminant</h5>
+                        <p class="mb-0 fs-5">{{ equation.discriminant|floatformat:6 }}</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="result-item">
+                        <h5><i class="fas fa-sitemap me-2"></i>Nature of Roots</h5>
+                        <p class="mb-0 fs-5">{{ equation.get_roots_type }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="result-item">
+                        <h5><i class="fas fa-arrow-up me-2"></i>Direction</h5>
+                        <p class="mb-0 fs-5">Opens {{ equation.get_direction }}</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="result-item">
+                        <h5><i class="fas fa-crosshairs me-2"></i>Vertex</h5>
+                        <p class="mb-0 fs-5">({{ equation.vertex_x|floatformat:6 }}, {{ equation.vertex_y|floatformat:6 }})</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Roots -->
+            <div class="result-item mb-4">
+                <h5><i class="fas fa-root me-2"></i>Roots</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Root 1:</strong> 
+                            {% if equation.root1_imag == 0 %}
+                                {{ equation.root1|floatformat:6 }}
+                            {% else %}
+                                {{ equation.root1|floatformat:6 }} + {{ equation.root1_imag|floatformat:6 }}i
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Root 2:</strong> 
+                            {% if equation.root2_imag == 0 %}
+                                {{ equation.root2|floatformat:6 }}
+                            {% else %}
+                                {{ equation.root2|floatformat:6 }} + {{ equation.root2_imag|floatformat:6 }}i
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Axis of Symmetry -->
+            <div class="result-item mb-4">
+                <h5><i class="fas fa-arrows-alt-h me-2"></i>Axis of Symmetry</h5>
+                <p class="mb-0 fs-5">x = {{ equation.vertex_x|floatformat:6 }}</p>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Metadata -->
+            <div class="result-item">
+                <h5><i class="fas fa-info me-2"></i>Information</h5>
+                <p><strong>Solved on:</strong><br>{{ equation.created_at|date:"F d, Y" }} at {{ equation.created_at|time:"H:i" }}</p>
+                {% if equation.ip_address %}
+                <p><strong>IP Address:</strong><br>{{ equation.ip_address }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Coefficients -->
+            <div class="result-item">
+                <h5><i class="fas fa-cogs me-2"></i>Coefficients</h5>
+                <p><strong>a =</strong> {{ equation.a }}</p>
+                <p><strong>b =</strong> {{ equation.b }}</p>
+                <p><strong>c =</strong> {{ equation.c }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="text-center mt-4">
+        <a href="{% url 'solver:index' %}" class="btn btn-primary me-3">
+            <i class="fas fa-calculator me-2"></i>Solve New Equation
+        </a>
+        <a href="{% url 'solver:history' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-history me-2"></i>View History
+        </a>
+    </div>
+</div>
+{% endblock %}
