@@ -149,6 +149,97 @@
             display: inline-block;
             margin-top: 1rem;
         }
+        
+        /* Dark Mode Styles */
+        [data-theme="dark"] {
+            --primary-color: #4A90E2;
+            --secondary-color: #B85C8A;
+            --accent-color: #FFB347;
+            --success-color: #E74C3C;
+        }
+        
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: #ecf0f1;
+        }
+        
+        [data-theme="dark"] .main-container {
+            background: rgba(44, 62, 80, 0.95);
+            color: #ecf0f1;
+        }
+        
+        [data-theme="dark"] .form-container,
+        [data-theme="dark"] .result-container {
+            background: #34495e;
+            color: #ecf0f1;
+        }
+        
+        [data-theme="dark"] .result-item {
+            background: #2c3e50;
+            color: #ecf0f1;
+        }
+        
+        [data-theme="dark"] .navbar {
+            background: rgba(44, 62, 80, 0.9) !important;
+        }
+        
+        [data-theme="dark"] .form-control {
+            background: #2c3e50;
+            border-color: #34495e;
+            color: #ecf0f1;
+        }
+        
+        [data-theme="dark"] .form-control:focus {
+            background: #2c3e50;
+            border-color: var(--primary-color);
+            color: #ecf0f1;
+        }
+        
+        [data-theme="dark"] .card {
+            background: #34495e;
+            color: #ecf0f1;
+        }
+        
+        /* Step-by-step solution styling */
+        .step-solution {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        [data-theme="dark"] .step-solution {
+            background: #2c3e50;
+            color: #ecf0f1;
+        }
+        
+        .step-number {
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        
+        .math-expression {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1em;
+            background: rgba(0,0,0,0.05);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 0.25rem 0;
+        }
+        
+        [data-theme="dark"] .math-expression {
+            background: rgba(255,255,255,0.1);
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -161,13 +252,16 @@
                 <i class="fas fa-calculator me-2"></i>
                 Quadratic Solver
             </a>
-            <div class="navbar-nav ms-auto">
+            <div class="navbar-nav ms-auto d-flex align-items-center">
                 <a class="nav-link" href="{% url 'solver:index' %}">
                     <i class="fas fa-home me-1"></i>Home
                 </a>
                 <a class="nav-link" href="{% url 'solver:history' %}">
                     <i class="fas fa-history me-1"></i>History
                 </a>
+                <button class="btn btn-sm btn-outline-secondary ms-2" id="darkModeToggle" title="Toggle Dark Mode">
+                    <i class="fas fa-moon" id="darkModeIcon"></i>
+                </button>
             </div>
         </div>
     </nav>
@@ -192,6 +286,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Plotly.js for interactive graphs -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     
     {% block extra_js %}{% endblock %}
 </body>

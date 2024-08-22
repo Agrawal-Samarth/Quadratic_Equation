@@ -107,9 +107,32 @@
         <div id="rootsDisplay"></div>
     </div>
     
+    <!-- Step-by-Step Solution -->
+    <div class="result-item">
+        <h5><i class="fas fa-list-ol me-2"></i>Step-by-Step Solution</h5>
+        <div id="stepByStepDisplay"></div>
+    </div>
+    
     <!-- Graph -->
     <div class="plot-container" id="plotContainer">
-        <h5 class="mb-3"><i class="fas fa-chart-area me-2"></i>Graph</h5>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0"><i class="fas fa-chart-area me-2"></i>Interactive Graph</h5>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="zoomInBtn">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="zoomOutBtn">
+                    <i class="fas fa-search-minus"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="resetZoomBtn">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-success" id="exportGraphBtn">
+                    <i class="fas fa-download"></i>
+                </button>
+            </div>
+        </div>
+        <div id="interactivePlot" style="width: 100%; height: 400px; border: 1px solid #ddd; border-radius: 8px;"></div>
         <img id="plotImage" src="" alt="Quadratic equation graph" style="display: none;">
     </div>
 </div>
@@ -144,10 +167,64 @@
 
 {% block extra_js %}
 <script>
+let currentPlot = null;
+let currentData = null;
+
 $(document).ready(function() {
+    // Initialize dark mode
+    initializeDarkMode();
+    
+    // Form submission
     $('#quadraticForm').on('submit', function(e) {
         e.preventDefault();
-        
+        solveEquation();
+    });
+    
+    // Interactive graph controls
+    $('#zoomInBtn').on('click', function() {
+        if (currentPlot) {
+            Plotly.relayout('interactivePlot', {
+                'xaxis.range': [currentPlot.layout.xaxis.range[0] * 0.8, currentPlot.layout.xaxis.range[1] * 0.8],
+                'yaxis.range': [currentPlot.layout.yaxis.range[0] * 0.8, currentPlot.layout.yaxis.range[1] * 0.8]
+            });
+        }
+    });
+    
+    $('#zoomOutBtn').on('click', function() {
+        if (currentPlot) {
+            Plotly.relayout('interactivePlot', {
+                'xaxis.range': [currentPlot.layout.xaxis.range[0] * 1.25, currentPlot.layout.xaxis.range[1] * 1.25],
+                'yaxis.range': [currentPlot.layout.yaxis.range[0] * 1.25, currentPlot.layout.yaxis.range[1] * 1.25]
+            });
+        }
+    });
+    
+    $('#resetZoomBtn').on('click', function() {
+        if (currentPlot) {
+            Plotly.relayout('interactivePlot', {
+                'xaxis.autorange': true,
+                'yaxis.autorange': true
+            });
+        }
+    });
+    
+    $('#exportGraphBtn').on('click', function() {
+        if (currentPlot) {
+            Plotly.downloadImage('interactivePlot', {
+                format: 'png',
+                width: 800,
+                height: 600,
+                filename: 'quadratic_equation_graph'
+            });
+        }
+    });
+    
+    // Dark mode toggle
+    $('#darkModeToggle').on('click', function() {
+        toggleDarkMode();
+    });
+    
+    function solveEquation() {
         // Show loading
         $('#loading').show();
         $('#results').hide();
@@ -167,6 +244,7 @@ $(document).ready(function() {
             data: formData,
             success: function(response) {
                 if (response.success) {
+                    currentData = response;
                     displayResults(response);
                 } else {
                     showError(response.error);
@@ -183,7 +261,7 @@ $(document).ready(function() {
                 $('#loading').hide();
             }
         });
-    });
+    }
     
     function displayResults(data) {
         // Update displays
@@ -194,8 +272,26 @@ $(document).ready(function() {
         $('#vertexDisplay').text('(' + data.vertex[0].toFixed(6) + ', ' + data.vertex[1].toFixed(6) + ')');
         
         // Display roots
+        displayRoots(data.roots);
+        
+        // Display step-by-step solution
+        displayStepByStep(data);
+        
+        // Create interactive plot
+        createInteractivePlot(data);
+        
+        // Show results
+        $('#results').show();
+        
+        // Scroll to results
+        $('html, body').animate({
+            scrollTop: $('#results').offset().top - 100
+        }, 500);
+    }
+    
+    function displayRoots(roots) {
         var rootsHtml = '';
-        data.roots.forEach(function(root, index) {
+        roots.forEach(function(root, index) {
             if (typeof root === 'object' && root.real !== undefined) {
                 if (root.imag === 0) {
                     rootsHtml += '<p class="mb-1">Root ' + (index + 1) + ': ' + root.real.toFixed(6) + '</p>';
@@ -207,19 +303,210 @@ $(document).ready(function() {
             }
         });
         $('#rootsDisplay').html(rootsHtml);
+    }
+    
+    function displayStepByStep(data) {
+        var a = parseFloat($('#a').val());
+        var b = parseFloat($('#b').val());
+        var c = parseFloat($('#c').val());
         
-        // Display plot
-        if (data.plot) {
-            $('#plotImage').attr('src', 'data:image/png;base64,' + data.plot).show();
+        var stepsHtml = '';
+        
+        // Step 1: Identify coefficients
+        stepsHtml += '<div class="step-solution">';
+        stepsHtml += '<span class="step-number">1</span>';
+        stepsHtml += '<strong>Identify the coefficients:</strong><br>';
+        stepsHtml += '<span class="math-expression">a = ' + a + '</span>, ';
+        stepsHtml += '<span class="math-expression">b = ' + b + '</span>, ';
+        stepsHtml += '<span class="math-expression">c = ' + c + '</span>';
+        stepsHtml += '</div>';
+        
+        // Step 2: Calculate discriminant
+        stepsHtml += '<div class="step-solution">';
+        stepsHtml += '<span class="step-number">2</span>';
+        stepsHtml += '<strong>Calculate the discriminant:</strong><br>';
+        stepsHtml += '<span class="math-expression">D = b² - 4ac</span><br>';
+        stepsHtml += '<span class="math-expression">D = (' + b + ')² - 4(' + a + ')(' + c + ')</span><br>';
+        stepsHtml += '<span class="math-expression">D = ' + (b*b) + ' - ' + (4*a*c) + ' = ' + data.discriminant.toFixed(6) + '</span>';
+        stepsHtml += '</div>';
+        
+        // Step 3: Determine nature of roots
+        stepsHtml += '<div class="step-solution">';
+        stepsHtml += '<span class="step-number">3</span>';
+        stepsHtml += '<strong>Nature of roots:</strong><br>';
+        if (data.discriminant > 0) {
+            stepsHtml += 'Since D > 0, there are <strong>two distinct real roots</strong>.';
+        } else if (data.discriminant === 0) {
+            stepsHtml += 'Since D = 0, there is <strong>one repeated real root</strong>.';
+        } else {
+            stepsHtml += 'Since D < 0, there are <strong>two complex roots</strong>.';
+        }
+        stepsHtml += '</div>';
+        
+        // Step 4: Apply quadratic formula
+        stepsHtml += '<div class="step-solution">';
+        stepsHtml += '<span class="step-number">4</span>';
+        stepsHtml += '<strong>Apply the quadratic formula:</strong><br>';
+        stepsHtml += '<span class="math-expression">x = (-b ± √D) / (2a)</span><br>';
+        stepsHtml += '<span class="math-expression">x = (-(' + b + ') ± √(' + data.discriminant.toFixed(6) + ')) / (2(' + a + '))</span><br>';
+        
+        if (data.discriminant >= 0) {
+            var sqrtD = Math.sqrt(data.discriminant);
+            var root1 = (-b + sqrtD) / (2 * a);
+            var root2 = (-b - sqrtD) / (2 * a);
+            stepsHtml += '<span class="math-expression">x₁ = ' + root1.toFixed(6) + '</span><br>';
+            stepsHtml += '<span class="math-expression">x₂ = ' + root2.toFixed(6) + '</span>';
+        } else {
+            stepsHtml += 'Since the discriminant is negative, the roots are complex.';
+        }
+        stepsHtml += '</div>';
+        
+        $('#stepByStepDisplay').html(stepsHtml);
+    }
+    
+    function createInteractivePlot(data) {
+        var a = parseFloat($('#a').val());
+        var b = parseFloat($('#b').val());
+        var c = parseFloat($('#c').val());
+        
+        // Calculate x range
+        var vertexX = data.vertex[0];
+        var xMin = vertexX - 5;
+        var xMax = vertexX + 5;
+        var x = [];
+        var y = [];
+        
+        for (var i = xMin; i <= xMax; i += 0.1) {
+            x.push(i);
+            y.push(a * i * i + b * i + c);
         }
         
-        // Show results
-        $('#results').show();
+        // Prepare traces
+        var traces = [];
         
-        // Scroll to results
-        $('html, body').animate({
-            scrollTop: $('#results').offset().top - 100
-        }, 500);
+        // Main function trace
+        traces.push({
+            x: x,
+            y: y,
+            type: 'scatter',
+            mode: 'lines',
+            name: data.equation.replace(' = 0', ''),
+            line: { color: '#2E86AB', width: 3 }
+        });
+        
+        // Real roots
+        data.roots.forEach(function(root, index) {
+            if (typeof root === 'object' && root.imag === 0) {
+                traces.push({
+                    x: [root.real],
+                    y: [0],
+                    type: 'scatter',
+                    mode: 'markers',
+                    name: 'Root ' + (index + 1) + ': ' + root.real.toFixed(3),
+                    marker: { color: 'red', size: 10 }
+                });
+            } else if (typeof root === 'number') {
+                traces.push({
+                    x: [root],
+                    y: [0],
+                    type: 'scatter',
+                    mode: 'markers',
+                    name: 'Root ' + (index + 1) + ': ' + root.toFixed(3),
+                    marker: { color: 'red', size: 10 }
+                });
+            }
+        });
+        
+        // Vertex
+        traces.push({
+            x: [data.vertex[0]],
+            y: [data.vertex[1]],
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Vertex: (' + data.vertex[0].toFixed(3) + ', ' + data.vertex[1].toFixed(3) + ')',
+            marker: { color: 'green', size: 12, symbol: 'triangle-up' }
+        });
+        
+        var layout = {
+            title: {
+                text: 'Interactive Graph: ' + data.equation,
+                font: { size: 16 }
+            },
+            xaxis: {
+                title: 'x',
+                showgrid: true,
+                zeroline: true,
+                zerolinecolor: 'black',
+                zerolinewidth: 1
+            },
+            yaxis: {
+                title: 'y',
+                showgrid: true,
+                zeroline: true,
+                zerolinecolor: 'black',
+                zerolinewidth: 1
+            },
+            hovermode: 'closest',
+            showlegend: true,
+            legend: {
+                x: 0.02,
+                y: 0.98,
+                bgcolor: 'rgba(255,255,255,0.8)'
+            }
+        };
+        
+        var config = {
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+            displaylogo: false
+        };
+        
+        Plotly.newPlot('interactivePlot', traces, layout, config);
+        currentPlot = { layout: layout };
+    }
+    
+    function initializeDarkMode() {
+        var theme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        updateDarkModeIcon(theme);
+    }
+    
+    function toggleDarkMode() {
+        var currentTheme = document.documentElement.getAttribute('data-theme');
+        var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateDarkModeIcon(newTheme);
+        
+        // Update plot theme if it exists
+        if (currentPlot) {
+            var layout = currentPlot.layout;
+            if (newTheme === 'dark') {
+                layout.paper_bgcolor = '#2c3e50';
+                layout.plot_bgcolor = '#34495e';
+                layout.font = { color: '#ecf0f1' };
+                layout.xaxis = { ...layout.xaxis, color: '#ecf0f1', gridcolor: '#4a5568' };
+                layout.yaxis = { ...layout.yaxis, color: '#ecf0f1', gridcolor: '#4a5568' };
+            } else {
+                layout.paper_bgcolor = 'white';
+                layout.plot_bgcolor = 'white';
+                layout.font = { color: 'black' };
+                layout.xaxis = { ...layout.xaxis, color: 'black', gridcolor: '#e0e0e0' };
+                layout.yaxis = { ...layout.yaxis, color: 'black', gridcolor: '#e0e0e0' };
+            }
+            Plotly.relayout('interactivePlot', layout);
+        }
+    }
+    
+    function updateDarkModeIcon(theme) {
+        var icon = $('#darkModeIcon');
+        if (theme === 'dark') {
+            icon.removeClass('fa-moon').addClass('fa-sun');
+        } else {
+            icon.removeClass('fa-sun').addClass('fa-moon');
+        }
     }
     
     function showError(message) {
