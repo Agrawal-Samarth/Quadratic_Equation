@@ -48,6 +48,26 @@
             </button>
         </div>
     </form>
+    
+    <!-- Practice Mode Section -->
+    <div class="mt-4 p-3" style="background: linear-gradient(45deg, #f8f9fa, #e9ecef); border-radius: 10px; border-left: 4px solid var(--accent-color);">
+        <h5 class="mb-3">
+            <i class="fas fa-dumbbell me-2"></i>Practice Mode
+        </h5>
+        <p class="mb-3 text-muted">Generate random quadratic equations to practice solving!</p>
+        <div class="row">
+            <div class="col-md-6">
+                <button type="button" class="btn btn-outline-warning w-100" id="generateEasyBtn">
+                    <i class="fas fa-seedling me-2"></i>Easy (Integer coefficients)
+                </button>
+            </div>
+            <div class="col-md-6">
+                <button type="button" class="btn btn-outline-danger w-100" id="generateHardBtn">
+                    <i class="fas fa-fire me-2"></i>Hard (Decimal coefficients)
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Loading Indicator -->
@@ -113,6 +133,28 @@
         <div id="stepByStepDisplay"></div>
     </div>
     
+    <!-- Multiple Equation Comparison -->
+    <div class="result-item mb-4">
+        <h5><i class="fas fa-layer-group me-2"></i>Compare with Another Equation</h5>
+        <div class="row">
+            <div class="col-md-3">
+                <input type="number" class="form-control form-control-sm" id="compareA" placeholder="a" step="any">
+            </div>
+            <div class="col-md-3">
+                <input type="number" class="form-control form-control-sm" id="compareB" placeholder="b" step="any">
+            </div>
+            <div class="col-md-3">
+                <input type="number" class="form-control form-control-sm" id="compareC" placeholder="c" step="any">
+            </div>
+            <div class="col-md-3">
+                <button type="button" class="btn btn-sm btn-outline-info w-100" id="addComparisonBtn">
+                    <i class="fas fa-plus me-1"></i>Add to Graph
+                </button>
+            </div>
+        </div>
+        <div id="comparisonEquations" class="mt-2"></div>
+    </div>
+    
     <!-- Graph -->
     <div class="plot-container" id="plotContainer">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -126,6 +168,9 @@
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-primary" id="resetZoomBtn">
                     <i class="fas fa-expand-arrows-alt"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-warning" id="clearComparisonBtn">
+                    <i class="fas fa-trash"></i>
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-success" id="exportGraphBtn">
                     <i class="fas fa-download"></i>
@@ -169,6 +214,7 @@
 <script>
 let currentPlot = null;
 let currentData = null;
+let comparisonEquations = [];
 
 $(document).ready(function() {
     // Initialize dark mode
@@ -222,6 +268,24 @@ $(document).ready(function() {
     // Dark mode toggle
     $('#darkModeToggle').on('click', function() {
         toggleDarkMode();
+    });
+    
+    // Practice mode buttons
+    $('#generateEasyBtn').on('click', function() {
+        generateRandomEquation('easy');
+    });
+    
+    $('#generateHardBtn').on('click', function() {
+        generateRandomEquation('hard');
+    });
+    
+    // Multiple equation comparison
+    $('#addComparisonBtn').on('click', function() {
+        addComparisonEquation();
+    });
+    
+    $('#clearComparisonBtn').on('click', function() {
+        clearComparisonEquations();
     });
     
     function solveEquation() {
@@ -509,8 +573,291 @@ $(document).ready(function() {
         }
     }
     
+    function generateRandomEquation(difficulty) {
+        var a, b, c;
+        
+        if (difficulty === 'easy') {
+            // Easy: Integer coefficients, a ≠ 0
+            a = Math.floor(Math.random() * 10) + 1; // 1 to 10
+            if (Math.random() < 0.5) a = -a; // 50% chance negative
+            
+            b = Math.floor(Math.random() * 21) - 10; // -10 to 10
+            c = Math.floor(Math.random() * 21) - 10; // -10 to 10
+        } else {
+            // Hard: Decimal coefficients
+            a = (Math.random() * 10 - 5).toFixed(1); // -5 to 5
+            while (parseFloat(a) === 0) {
+                a = (Math.random() * 10 - 5).toFixed(1);
+            }
+            
+            b = (Math.random() * 20 - 10).toFixed(1); // -10 to 10
+            c = (Math.random() * 20 - 10).toFixed(1); // -10 to 10
+        }
+        
+        // Fill the form
+        $('#a').val(a);
+        $('#b').val(b);
+        $('#c').val(c);
+        
+        // Show a notification
+        showNotification('Generated ' + difficulty + ' equation: ' + a + 'x² + ' + b + 'x + ' + c + ' = 0', 'success');
+        
+        // Auto-solve the equation
+        setTimeout(function() {
+            solveEquation();
+        }, 1000);
+    }
+    
+    function addComparisonEquation() {
+        var a = parseFloat($('#compareA').val());
+        var b = parseFloat($('#compareB').val());
+        var c = parseFloat($('#compareC').val());
+        
+        if (isNaN(a) || a === 0) {
+            showNotification('Please enter a valid coefficient a (cannot be 0)', 'error');
+            return;
+        }
+        
+        if (isNaN(b)) b = 0;
+        if (isNaN(c)) c = 0;
+        
+        var equation = {
+            a: a,
+            b: b,
+            c: c,
+            id: Date.now() // Unique ID
+        };
+        
+        comparisonEquations.push(equation);
+        updateComparisonDisplay();
+        updatePlotWithComparison();
+        
+        // Clear the input fields
+        $('#compareA').val('');
+        $('#compareB').val('');
+        $('#compareC').val('');
+        
+        showNotification('Added equation to comparison', 'success');
+    }
+    
+    function updateComparisonDisplay() {
+        var html = '';
+        comparisonEquations.forEach(function(eq, index) {
+            var equationStr = formatEquation(eq.a, eq.b, eq.c);
+            html += '<span class="badge bg-info me-2 mb-1">';
+            html += equationStr + ' ';
+            html += '<button type="button" class="btn-close btn-close-white ms-1" style="font-size: 0.7em;" onclick="removeComparisonEquation(' + eq.id + ')"></button>';
+            html += '</span>';
+        });
+        $('#comparisonEquations').html(html);
+    }
+    
+    function removeComparisonEquation(id) {
+        comparisonEquations = comparisonEquations.filter(function(eq) {
+            return eq.id !== id;
+        });
+        updateComparisonDisplay();
+        updatePlotWithComparison();
+    }
+    
+    function clearComparisonEquations() {
+        comparisonEquations = [];
+        updateComparisonDisplay();
+        if (currentData) {
+            createInteractivePlot(currentData);
+        }
+        showNotification('Cleared all comparison equations', 'info');
+    }
+    
+    function updatePlotWithComparison() {
+        if (!currentData) return;
+        
+        var a = parseFloat($('#a').val());
+        var b = parseFloat($('#b').val());
+        var c = parseFloat($('#c').val());
+        
+        // Calculate x range
+        var vertexX = currentData.vertex[0];
+        var xMin = vertexX - 5;
+        var xMax = vertexX + 5;
+        
+        // Include comparison equation vertices in range
+        comparisonEquations.forEach(function(eq) {
+            var compVertexX = -eq.b / (2 * eq.a);
+            xMin = Math.min(xMin, compVertexX - 5);
+            xMax = Math.max(xMax, compVertexX + 5);
+        });
+        
+        var traces = [];
+        
+        // Main equation
+        var x = [];
+        var y = [];
+        for (var i = xMin; i <= xMax; i += 0.1) {
+            x.push(i);
+            y.push(a * i * i + b * i + c);
+        }
+        
+        traces.push({
+            x: x,
+            y: y,
+            type: 'scatter',
+            mode: 'lines',
+            name: currentData.equation.replace(' = 0', ''),
+            line: { color: '#2E86AB', width: 3 }
+        });
+        
+        // Comparison equations
+        var colors = ['#E74C3C', '#F39C12', '#9B59B6', '#1ABC9C', '#34495E'];
+        comparisonEquations.forEach(function(eq, index) {
+            var compX = [];
+            var compY = [];
+            for (var i = xMin; i <= xMax; i += 0.1) {
+                compX.push(i);
+                compY.push(eq.a * i * i + eq.b * i + eq.c);
+            }
+            
+            traces.push({
+                x: compX,
+                y: compY,
+                type: 'scatter',
+                mode: 'lines',
+                name: formatEquation(eq.a, eq.b, eq.c).replace(' = 0', ''),
+                line: { color: colors[index % colors.length], width: 2, dash: 'dash' }
+            });
+        });
+        
+        // Real roots for main equation
+        currentData.roots.forEach(function(root, index) {
+            if (typeof root === 'object' && root.imag === 0) {
+                traces.push({
+                    x: [root.real],
+                    y: [0],
+                    type: 'scatter',
+                    mode: 'markers',
+                    name: 'Root ' + (index + 1) + ': ' + root.real.toFixed(3),
+                    marker: { color: 'red', size: 10 }
+                });
+            } else if (typeof root === 'number') {
+                traces.push({
+                    x: [root],
+                    y: [0],
+                    type: 'scatter',
+                    mode: 'markers',
+                    name: 'Root ' + (index + 1) + ': ' + root.toFixed(3),
+                    marker: { color: 'red', size: 10 }
+                });
+            }
+        });
+        
+        // Vertex for main equation
+        traces.push({
+            x: [currentData.vertex[0]],
+            y: [currentData.vertex[1]],
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Vertex: (' + currentData.vertex[0].toFixed(3) + ', ' + currentData.vertex[1].toFixed(3) + ')',
+            marker: { color: 'green', size: 12, symbol: 'triangle-up' }
+        });
+        
+        var layout = {
+            title: {
+                text: 'Equation Comparison',
+                font: { size: 16 }
+            },
+            xaxis: {
+                title: 'x',
+                showgrid: true,
+                zeroline: true,
+                zerolinecolor: 'black',
+                zerolinewidth: 1
+            },
+            yaxis: {
+                title: 'y',
+                showgrid: true,
+                zeroline: true,
+                zerolinecolor: 'black',
+                zerolinewidth: 1
+            },
+            hovermode: 'closest',
+            showlegend: true,
+            legend: {
+                x: 0.02,
+                y: 0.98,
+                bgcolor: 'rgba(255,255,255,0.8)'
+            }
+        };
+        
+        var config = {
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+            displaylogo: false
+        };
+        
+        Plotly.newPlot('interactivePlot', traces, layout, config);
+        currentPlot = { layout: layout };
+    }
+    
+    function formatEquation(a, b, c) {
+        var terms = [];
+        
+        // Handle x² term
+        if (a === 1) {
+            terms.push("x²");
+        } else if (a === -1) {
+            terms.push("-x²");
+        } else {
+            terms.push(a + "x²");
+        }
+        
+        // Handle x term
+        if (b > 0) {
+            if (b === 1) {
+                terms.push("+ x");
+            } else {
+                terms.push("+ " + b + "x");
+            }
+        } else if (b < 0) {
+            if (b === -1) {
+                terms.push("- x");
+            } else {
+                terms.push("- " + Math.abs(b) + "x");
+            }
+        }
+        
+        // Handle constant term
+        if (c > 0) {
+            terms.push("+ " + c);
+        } else if (c < 0) {
+            terms.push("- " + Math.abs(c));
+        }
+        
+        return terms.join(" ") + " = 0";
+    }
+    
+    function showNotification(message, type) {
+        var alertClass = 'alert-info';
+        if (type === 'success') alertClass = 'alert-success';
+        if (type === 'error') alertClass = 'alert-danger';
+        if (type === 'warning') alertClass = 'alert-warning';
+        
+        var notification = '<div class="alert ' + alertClass + ' alert-dismissible fade show" role="alert">';
+        notification += message;
+        notification += '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        notification += '</div>';
+        
+        // Add to top of main container
+        $('.main-container').prepend(notification);
+        
+        // Auto-dismiss after 3 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut();
+        }, 3000);
+    }
+    
     function showError(message) {
-        alert('Error: ' + message);
+        showNotification('Error: ' + message, 'error');
     }
 });
 </script>
