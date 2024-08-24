@@ -859,6 +859,9 @@ $(document).ready(function() {
     function showError(message) {
         showNotification('Error: ' + message, 'error');
     }
+    
+    // Global notification function for better user feedback
+    window.showNotification = showNotification;
 });
 </script>
 {% endblock %}
