@@ -862,6 +862,23 @@ $(document).ready(function() {
     
     // Global notification function for better user feedback
     window.showNotification = showNotification;
+    
+    // Input validation function
+    function validateInputs() {
+        var a = parseFloat($('#a').val());
+        var b = parseFloat($('#b').val());
+        var c = parseFloat($('#c').val());
+        
+        if (isNaN(a) || a === 0) {
+            showNotification('Coefficient "a" must be a non-zero number', 'error');
+            return false;
+        }
+        
+        if (isNaN(b)) b = 0;
+        if (isNaN(c)) c = 0;
+        
+        return true;
+    }
 });
 </script>
 {% endblock %}
