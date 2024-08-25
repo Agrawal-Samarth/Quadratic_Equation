@@ -887,6 +887,14 @@ $(document).ready(function() {
             solveEquation();
         }
     });
+    
+    // Equation counter
+    function updateEquationCounter() {
+        var count = localStorage.getItem('equationCount') || 0;
+        count = parseInt(count) + 1;
+        localStorage.setItem('equationCount', count);
+        return count;
+    }
 });
 </script>
 {% endblock %}
