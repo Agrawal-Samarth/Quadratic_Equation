@@ -879,6 +879,14 @@ $(document).ready(function() {
         
         return true;
     }
+    
+    // Keyboard shortcuts
+    $(document).on('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            solveEquation();
+        }
+    });
 });
 </script>
 {% endblock %}
