@@ -901,6 +901,14 @@ $(document).ready(function() {
         $('#loading').show();
         $('#loading .spinner-border').addClass('text-primary');
     }
+    
+    // Equation format helper
+    function formatCoefficient(value, variable) {
+        if (value === 0) return '';
+        if (value === 1) return variable;
+        if (value === -1) return '-' + variable;
+        return value + variable;
+    }
 });
 </script>
 {% endblock %}
