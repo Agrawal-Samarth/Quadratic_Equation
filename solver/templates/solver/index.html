@@ -915,6 +915,14 @@ $(document).ready(function() {
     
     // Initialize tooltips
     $('[data-bs-toggle="tooltip"]').tooltip();
+    
+    // Form reset function
+    function resetForm() {
+        $('#a').val('1');
+        $('#b').val('0');
+        $('#c').val('0');
+        $('#a').focus();
+    }
 });
 </script>
 {% endblock %}
