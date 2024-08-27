@@ -50,7 +50,7 @@
     </form>
     
     <!-- Practice Mode Section -->
-    <div class="mt-4 p-3" style="background: linear-gradient(45deg, #f8f9fa, #e9ecef); border-radius: 10px; border-left: 4px solid var(--accent-color);">
+    <div class="mt-4 p-3 practice-mode" style="background: linear-gradient(45deg, #f8f9fa, #e9ecef); border-radius: 10px; border-left: 4px solid var(--accent-color);">
         <h5 class="mb-3">
             <i class="fas fa-dumbbell me-2"></i>Practice Mode
         </h5>
@@ -134,7 +134,7 @@
     </div>
     
     <!-- Multiple Equation Comparison -->
-    <div class="result-item mb-4">
+    <div class="result-item mb-5">
         <h5><i class="fas fa-layer-group me-2"></i>Compare with Another Equation</h5>
         <div class="row">
             <div class="col-md-3">
@@ -155,7 +155,10 @@
         <div id="comparisonEquations" class="mt-2"></div>
     </div>
     
-    <!-- Graph -->
+</div>
+
+<!-- Graph Section -->
+<div class="form-container mt-4">
     <div class="plot-container" id="plotContainer">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0"><i class="fas fa-chart-area me-2"></i>Interactive Graph</h5>
@@ -177,7 +180,9 @@
                 </button>
             </div>
         </div>
-        <div id="interactivePlot" style="width: 100%; height: 400px; border: 1px solid #ddd; border-radius: 8px;"></div>
+        <div class="graph-wrapper">
+            <div id="interactivePlot" style="width: 100%; height: 500px; border: 1px solid #ddd; border-radius: 8px;"></div>
+        </div>
         <img id="plotImage" src="" alt="Quadratic equation graph" style="display: none;">
     </div>
 </div>
@@ -523,7 +528,9 @@ $(document).ready(function() {
             responsive: true,
             displayModeBar: true,
             modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
-            displaylogo: false
+            displaylogo: false,
+            autosizable: true,
+            useResizeHandler: true
         };
         
         Plotly.newPlot('interactivePlot', traces, layout, config);
@@ -792,7 +799,9 @@ $(document).ready(function() {
             responsive: true,
             displayModeBar: true,
             modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
-            displaylogo: false
+            displaylogo: false,
+            autosizable: true,
+            useResizeHandler: true
         };
         
         Plotly.newPlot('interactivePlot', traces, layout, config);

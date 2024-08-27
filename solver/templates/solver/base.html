@@ -57,6 +57,12 @@
             margin-bottom: 2rem;
         }
         
+        .form-container:has(.plot-container) {
+            max-width: 95%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
         .form-control {
             border-radius: 10px;
             border: 2px solid #e9ecef;
@@ -101,9 +107,25 @@
             border-left: 4px solid var(--primary-color);
         }
         
+        .result-item.mb-5 {
+            margin-bottom: 3rem !important;
+        }
+        
         .plot-container {
             text-align: center;
             margin-top: 2rem;
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+        }
+        
+        .plot-container .btn-group {
+            margin-bottom: 1rem;
+        }
+        
+        .graph-wrapper {
+            width: 100%;
+            max-width: 100%;
         }
         
         .plot-container img {
@@ -239,6 +261,54 @@
         
         [data-theme="dark"] .math-expression {
             background: rgba(255,255,255,0.1);
+        }
+        
+        /* Practice mode dark theme */
+        [data-theme="dark"] .practice-mode {
+            background: linear-gradient(45deg, #2c3e50, #34495e) !important;
+            border-left-color: var(--primary-color) !important;
+        }
+        
+        [data-theme="dark"] .practice-mode h5,
+        [data-theme="dark"] .practice-mode p {
+            color: #ecf0f1 !important;
+        }
+        
+        /* Badge dark theme */
+        [data-theme="dark"] .badge.bg-info {
+            background-color: var(--primary-color) !important;
+            color: white !important;
+        }
+        
+        /* Alert dark theme */
+        [data-theme="dark"] .alert {
+            background-color: #2c3e50;
+            border-color: #34495e;
+            color: #ecf0f1;
+        }
+        
+        [data-theme="dark"] .alert-success {
+            background-color: rgba(46, 204, 113, 0.1);
+            border-color: #2ecc71;
+            color: #2ecc71;
+        }
+        
+        [data-theme="dark"] .alert-danger {
+            background-color: rgba(231, 76, 60, 0.1);
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+        
+        [data-theme="dark"] .alert-warning {
+            background-color: rgba(241, 196, 15, 0.1);
+            border-color: #f1c40f;
+            color: #f1c40f;
+        }
+        
+        [data-theme="dark"] .alert-info {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-color: #3498db;
+            color: #3498db;
         }
     </style>
     
