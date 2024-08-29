@@ -46,6 +46,9 @@
             <button type="submit" class="btn btn-primary btn-lg">
                 <i class="fas fa-play me-2"></i>Solve Equation
             </button>
+            <button type="button" class="btn btn-outline-secondary btn-lg ms-2" id="shareBtn" style="display: none;">
+                <i class="fas fa-share me-2"></i>Share
+            </button>
         </div>
     </form>
     
@@ -327,6 +330,11 @@ $(document).ready(function() {
     
     $('#vertexFormBtn').on('click', function() {
         showVertexFormMethod();
+    });
+    
+    // Share functionality
+    $('#shareBtn').on('click', function() {
+        shareEquation();
     });
     
     function solveEquation() {
@@ -961,6 +969,9 @@ $(document).ready(function() {
     // Initialize tooltips
     $('[data-bs-toggle="tooltip"]').tooltip();
     
+    // Load equation from URL parameters
+    loadFromUrl();
+    
     // Form reset function
     function resetForm() {
         $('#a').val('1');
@@ -1094,6 +1105,61 @@ $(document).ready(function() {
             }
         }
         return factors;
+    }
+    
+    // Share functionality
+    function shareEquation() {
+        var a = parseFloat($('#a').val());
+        var b = parseFloat($('#b').val());
+        var c = parseFloat($('#c').val());
+        
+        if (isNaN(a) || a === 0) {
+            showNotification('Please enter a valid equation first', 'error');
+            return;
+        }
+        
+        // Create shareable URL
+        var params = new URLSearchParams();
+        params.set('a', a);
+        params.set('b', b);
+        params.set('c', c);
+        
+        var shareUrl = window.location.origin + window.location.pathname + '?' + params.toString();
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(shareUrl).then(function() {
+            showNotification('Shareable link copied to clipboard!', 'success');
+        }).catch(function() {
+            // Fallback for older browsers
+            var textArea = document.createElement('textarea');
+            textArea.value = shareUrl;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showNotification('Shareable link copied to clipboard!', 'success');
+        });
+    }
+    
+    // Load equation from URL parameters
+    function loadFromUrl() {
+        var urlParams = new URLSearchParams(window.location.search);
+        var a = urlParams.get('a');
+        var b = urlParams.get('b');
+        var c = urlParams.get('c');
+        
+        if (a && b !== null && c !== null) {
+            $('#a').val(a);
+            $('#b').val(b);
+            $('#c').val(c);
+            
+            // Auto-solve if valid equation
+            if (!isNaN(parseFloat(a)) && parseFloat(a) !== 0) {
+                setTimeout(function() {
+                    solveEquation();
+                }, 500);
+            }
+        }
     }
 });
 </script>
