@@ -855,7 +855,7 @@ $(document).ready(function() {
     function formatEquation(a, b, c) {
         var terms = [];
         
-        // Handle x² term
+        // Handling x² term
         if (a === 1) {
             terms.push("x²");
         } else if (a === -1) {
@@ -864,7 +864,7 @@ $(document).ready(function() {
             terms.push(a + "x²");
         }
         
-        // Handle x term
+        // Handling x term
         if (b > 0) {
             if (b === 1) {
                 terms.push("+ x");
@@ -879,7 +879,7 @@ $(document).ready(function() {
             }
         }
         
-        // Handle constant term
+        // Handling constant term
         if (c > 0) {
             terms.push("+ " + c);
         } else if (c < 0) {
