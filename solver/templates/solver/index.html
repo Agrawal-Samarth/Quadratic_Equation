@@ -972,6 +972,27 @@ $(document).ready(function() {
     // Load equation from URL parameters
     loadFromUrl();
     
+    // Load equation from URL parameters
+    function loadFromUrl() {
+        var urlParams = new URLSearchParams(window.location.search);
+        var a = urlParams.get('a');
+        var b = urlParams.get('b');
+        var c = urlParams.get('c');
+        
+        if (a && b !== null && c !== null) {
+            $('#a').val(a);
+            $('#b').val(b);
+            $('#c').val(c);
+            
+            // Auto-solve if valid equation
+            if (!isNaN(parseFloat(a)) && parseFloat(a) !== 0) {
+                setTimeout(function() {
+                    solveEquation();
+                }, 500);
+            }
+        }
+    }
+    
     // Form reset function
     function resetForm() {
         $('#a').val('1');
