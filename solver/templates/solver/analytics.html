@@ -1,0 +1,253 @@
+{% extends 'solver/base.html' %}
+
+{% block title %}Analytics Dashboard - Quadratic Equation Solver{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1><i class="fas fa-chart-bar me-3"></i>Analytics Dashboard</h1>
+    <p>Statistical analysis and insights for quadratic equations</p>
+</div>
+
+<div class="form-container">
+    <h3 class="mb-4">
+        <i class="fas fa-calculator me-2"></i>Equation Statistics
+    </h3>
+    
+    {% if stats.error %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>{{ stats.error }}
+        </div>
+    {% else %}
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h4>{{ stats.total_equations }}</h4>
+                    <p>Total Equations</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h4>{{ stats.real_roots_count }}</h4>
+                    <p>Real Roots</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h4>{{ stats.complex_roots_count }}</h4>
+                    <p>Complex Roots</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h4>{{ stats.perfect_squares }}</h4>
+                    <p>Perfect Squares</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h5><i class="fas fa-chart-pie me-2"></i>Parabola Direction</h5>
+                <div class="progress mb-2">
+                    <div class="progress-bar bg-success" style="width: {{ stats.upward_parabolas|floatformat:0 }}%">
+                        Upward: {{ stats.upward_parabolas }}
+                    </div>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar bg-danger" style="width: {{ stats.downward_parabolas|floatformat:0 }}%">
+                        Downward: {{ stats.downward_parabolas }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h5><i class="fas fa-clock me-2"></i>Recent Activity</h5>
+                <p><strong>{{ stats.recent_equations }}</strong> equations solved in the last 24 hours</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<div class="form-container">
+    <h3 class="mb-4">
+        <i class="fas fa-puzzle-piece me-2"></i>Equation Patterns
+    </h3>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <h5>Perfect Squares</h5>
+            {% if patterns.perfect_squares %}
+                <ul class="list-group">
+                    {% for eq in patterns.perfect_squares|slice:":5" %}
+                        <li class="list-group-item">{{ eq.equation }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">No perfect square equations found</p>
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <h5>Factorable Equations</h5>
+            {% if patterns.factorable_equations %}
+                <ul class="list-group">
+                    {% for eq in patterns.factorable_equations|slice:":5" %}
+                        <li class="list-group-item">{{ eq.equation }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">No factorable equations found</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="form-container">
+    <h3 class="mb-4">
+        <i class="fas fa-layer-group me-2"></i>Complexity Analysis
+    </h3>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="complexity-card simple">
+                <h4>{{ complexity.simple }}</h4>
+                <p>Simple Equations</p>
+                <small>a=1, small integers</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="complexity-card moderate">
+                <h4>{{ complexity.moderate }}</h4>
+                <p>Moderate Equations</p>
+                <small>a≠1, integers</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="complexity-card complex">
+                <h4>{{ complexity.complex }}</h4>
+                <p>Complex Equations</p>
+                <small>decimals, large numbers</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="form-container">
+    <h3 class="mb-4">
+        <i class="fas fa-chart-line me-2"></i>Usage Trends (Last 7 Days)
+    </h3>
+    
+    <div class="trends-container">
+        {% for day in trends %}
+            <div class="trend-day">
+                <span class="date">{{ day.date|date:"M d" }}</span>
+                <div class="trend-bar">
+                    <div class="trend-fill" style="height: {{ day.count|floatformat:0 }}px;"></div>
+                </div>
+                <span class="count">{{ day.count }}</span>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="text-center mt-4">
+    <a href="{% url 'solver:index' %}" class="btn btn-primary">
+        <i class="fas fa-arrow-left me-2"></i>Back to Solver
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-card {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    text-align: center;
+    border-left: 4px solid var(--primary-color);
+}
+
+.stat-card h4 {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.complexity-card {
+    padding: 1.5rem;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+}
+
+.complexity-card.simple {
+    background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+.complexity-card.moderate {
+    background: linear-gradient(45deg, #ffc107, #fd7e14);
+}
+
+.complexity-card.complex {
+    background: linear-gradient(45deg, #dc3545, #e83e8c);
+}
+
+.complexity-card h4 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.trends-container {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    height: 200px;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.trend-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.trend-bar {
+    width: 20px;
+    height: 150px;
+    background: #e9ecef;
+    border-radius: 10px;
+    position: relative;
+    margin: 0.5rem 0;
+}
+
+.trend-fill {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: var(--primary-color);
+    border-radius: 10px;
+    min-height: 2px;
+}
+
+.date, .count {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+[data-theme="dark"] .stat-card {
+    background: #2c3e50;
+    color: #ecf0f1;
+}
+
+[data-theme="dark"] .trends-container {
+    background: #2c3e50;
+}
+
+[data-theme="dark"] .trend-bar {
+    background: #34495e;
+}
+</style>
+{% endblock %}
