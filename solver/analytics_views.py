@@ -9,6 +9,7 @@ from django.views.decorators.http import require_http_methods
 from django.shortcuts import render
 import json
 from .equation_analytics import EquationAnalytics, EquationBatchProcessor, EquationExporter
+from .equation_intersection import EquationIntersectionCalculator
 
 
 def analytics_dashboard(request):
@@ -216,5 +217,35 @@ def equation_comparison(request):
             'total_compared': len(equations)
         })
         
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def calculate_intersections(request):
+    """Calculate intersection points between equations"""
+    try:
+        data = json.loads(request.body)
+        equations = data.get('equations', [])
+        
+        if len(equations) < 2:
+            return JsonResponse({'error': 'At least 2 equations required'}, status=400)
+        
+        calculator = EquationIntersectionCalculator()
+        
+        if len(equations) == 2:
+            # Calculate intersections between two equations
+            result = calculator.find_intersections(equations[0], equations[1])
+        else:
+            # Calculate intersections between multiple equations
+            result = calculator.find_multiple_intersections(equations)
+            # Add pattern analysis
+            result['pattern_analysis'] = calculator.analyze_intersection_patterns(equations)
+        
+        return JsonResponse(result)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
