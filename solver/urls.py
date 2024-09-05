@@ -11,4 +11,5 @@ urlpatterns = [
     
     # Analytics URLs
     path('analytics/', analytics_views.analytics_dashboard, name='analytics'),
+    path('api/intersections/', analytics_views.calculate_intersections, name='calculate_intersections'),
 ]
