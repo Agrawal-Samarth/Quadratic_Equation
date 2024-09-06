@@ -1162,6 +1162,40 @@ $(document).ready(function() {
         });
     }
     
+    // Display intersections on graph
+    function displayIntersectionsOnGraph(intersectionData) {
+        if (!intersectionData.intersections || intersectionData.intersections.length === 0) {
+            return;
+        }
+        
+        // Add intersection points to the plot
+        var intersectionTraces = [];
+        
+        intersectionData.intersections.forEach(function(intersection, index) {
+            intersectionTraces.push({
+                x: [intersection.x],
+                y: [intersection.y],
+                type: 'scatter',
+                mode: 'markers',
+                name: 'Intersection ' + (index + 1) + ': (' + intersection.x.toFixed(3) + ', ' + intersection.y.toFixed(3) + ')',
+                marker: { 
+                    color: 'purple', 
+                    size: 12, 
+                    symbol: 'star',
+                    line: { color: 'white', width: 2 }
+                }
+            });
+        });
+        
+        // Update the plot with intersection points
+        if (currentPlot) {
+            Plotly.addTraces('interactivePlot', intersectionTraces);
+        }
+        
+        // Show intersection info
+        showIntersectionInfo(intersectionData);
+    }
+    
     // Share functionality
     function shareEquation() {
         var a = parseFloat($('#a').val());
