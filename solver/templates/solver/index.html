@@ -730,6 +730,11 @@ $(document).ready(function() {
         var b = parseFloat($('#b').val());
         var c = parseFloat($('#c').val());
         
+        // Calculate intersections if we have comparison equations
+        if (comparisonEquations.length > 0) {
+            calculateAndDisplayIntersections(a, b, c);
+        }
+        
         // Calculate x range
         var vertexX = currentData.vertex[0];
         var xMin = vertexX - 5;
@@ -1142,7 +1147,7 @@ $(document).ready(function() {
             return;
         }
         
-        // Creating shareable URL
+        // Creating  shareable URL
         var params = new URLSearchParams();
         params.set('a', a);
         params.set('b', b);
