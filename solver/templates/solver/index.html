@@ -1136,6 +1136,32 @@ $(document).ready(function() {
         return factors;
     }
     
+    // Intersection calculation function
+    function calculateAndDisplayIntersections(a, b, c) {
+        var equations = [
+            {a: a, b: b, c: c}
+        ];
+        
+        // Add comparison equations
+        comparisonEquations.forEach(function(eq) {
+            equations.push({a: eq.a, b: eq.b, c: eq.c});
+        });
+        
+        // Call Python API
+        $.ajax({
+            url: '/api/intersections/',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({equations: equations}),
+            success: function(response) {
+                displayIntersectionsOnGraph(response);
+            },
+            error: function(xhr) {
+                console.error('Intersection calculation failed:', xhr.responseText);
+            }
+        });
+    }
+    
     // Share functionality
     function shareEquation() {
         var a = parseFloat($('#a').val());
