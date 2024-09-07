@@ -1196,6 +1196,32 @@ $(document).ready(function() {
         showIntersectionInfo(intersectionData);
     }
     
+    // Show intersection information
+    function showIntersectionInfo(intersectionData) {
+        var html = '<div class="alert alert-info mt-3">';
+        html += '<h6><i class="fas fa-crosshairs me-2"></i>Intersection Points</h6>';
+        
+        if (intersectionData.intersections && intersectionData.intersections.length > 0) {
+            html += '<p><strong>Found ' + intersectionData.intersections.length + ' intersection point(s):</strong></p>';
+            html += '<ul>';
+            intersectionData.intersections.forEach(function(intersection, index) {
+                html += '<li>Point ' + (index + 1) + ': (' + intersection.x.toFixed(3) + ', ' + intersection.y.toFixed(3) + ')</li>';
+            });
+            html += '</ul>';
+        } else {
+            html += '<p>No intersection points found between the equations.</p>';
+        }
+        
+        if (intersectionData.analysis) {
+            html += '<p><strong>Analysis:</strong> ' + intersectionData.analysis.description + '</p>';
+        }
+        
+        html += '</div>';
+        
+        // Add to comparison section
+        $('#comparisonEquations').after(html);
+    }
+    
     // Share functionality
     function shareEquation() {
         var a = parseFloat($('#a').val());
