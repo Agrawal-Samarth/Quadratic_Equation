@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import render
 import json
+from datetime import datetime
 from .equation_analytics import EquationAnalytics, EquationBatchProcessor, EquationExporter
 from .equation_intersection import EquationIntersectionCalculator
 
@@ -67,6 +68,52 @@ def batch_process_equations(request):
         results = processor.process_equation_list(equations_list)
         
         return JsonResponse(results)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def solve_equation_api(request):
+    """Standalone API endpoint for solving quadratic equations"""
+    try:
+        data = json.loads(request.body)
+        a = data.get('a')
+        b = data.get('b')
+        c = data.get('c')
+        
+        if a is None or b is None or c is None:
+            return JsonResponse({'error': 'Missing coefficients a, b, or c'}, status=400)
+        
+        try:
+            a, b, c = float(a), float(b), float(c)
+        except (ValueError, TypeError):
+            return JsonResponse({'error': 'Invalid coefficient values'}, status=400)
+        
+        if a == 0:
+            return JsonResponse({'error': 'Coefficient a cannot be zero'}, status=400)
+        
+        # Import here to avoid circular imports
+        from .quadratic_solver import QuadraticEquationSolver
+        solver = QuadraticEquationSolver(a, b, c)
+        
+        result = {
+            'equation': f"{a}x² + {b}x + {c} = 0",
+            'coefficients': {'a': a, 'b': b, 'c': c},
+            'discriminant': solver.get_discriminant(),
+            'roots': solver.get_roots(),
+            'vertex': solver.get_vertex(),
+            'axis_of_symmetry': solver.get_axis_of_symmetry(),
+            'direction': solver.get_direction(),
+            'roots_type': solver.get_roots_type(),
+            'discriminant_info': solver.get_discriminant_info(),
+            'solved_at': datetime.now().isoformat()
+        }
+        
+        return JsonResponse(result)
         
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
@@ -242,6 +289,52 @@ def calculate_intersections(request):
             result = calculator.find_multiple_intersections(equations)
             # Add pattern analysis
             result['pattern_analysis'] = calculator.analyze_intersection_patterns(equations)
+        
+        return JsonResponse(result)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def solve_equation_api(request):
+    """Standalone API endpoint for solving quadratic equations"""
+    try:
+        data = json.loads(request.body)
+        a = data.get('a')
+        b = data.get('b')
+        c = data.get('c')
+        
+        if a is None or b is None or c is None:
+            return JsonResponse({'error': 'Missing coefficients a, b, or c'}, status=400)
+        
+        try:
+            a, b, c = float(a), float(b), float(c)
+        except (ValueError, TypeError):
+            return JsonResponse({'error': 'Invalid coefficient values'}, status=400)
+        
+        if a == 0:
+            return JsonResponse({'error': 'Coefficient a cannot be zero'}, status=400)
+        
+        # Import here to avoid circular imports
+        from .quadratic_solver import QuadraticEquationSolver
+        solver = QuadraticEquationSolver(a, b, c)
+        
+        result = {
+            'equation': f"{a}x² + {b}x + {c} = 0",
+            'coefficients': {'a': a, 'b': b, 'c': c},
+            'discriminant': solver.get_discriminant(),
+            'roots': solver.get_roots(),
+            'vertex': solver.get_vertex(),
+            'axis_of_symmetry': solver.get_axis_of_symmetry(),
+            'direction': solver.get_direction(),
+            'roots_type': solver.get_roots_type(),
+            'discriminant_info': solver.get_discriminant_info(),
+            'solved_at': datetime.now().isoformat()
+        }
         
         return JsonResponse(result)
         
