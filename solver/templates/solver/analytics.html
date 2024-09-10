@@ -251,3 +251,44 @@
 }
 </style>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize dark mode
+    initializeDarkMode();
+    
+    // Dark mode toggle
+    $('#darkModeToggle').on('click', function() {
+        toggleDarkMode();
+    });
+    
+    // Dark mode functions (copied from base template)
+    function initializeDarkMode() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateDarkModeIcon(savedTheme);
+        }
+    }
+    
+    function toggleDarkMode() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateDarkModeIcon(newTheme);
+    }
+    
+    function updateDarkModeIcon(theme) {
+        const icon = $('#darkModeIcon');
+        if (theme === 'dark') {
+            icon.removeClass('fa-moon').addClass('fa-sun');
+        } else {
+            icon.removeClass('fa-sun').addClass('fa-moon');
+        }
+    }
+});
+</script>
+{% endblock %}
