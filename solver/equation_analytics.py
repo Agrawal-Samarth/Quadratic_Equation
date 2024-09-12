@@ -91,16 +91,16 @@ class EquationAnalytics:
                 patterns["perfect_squares"].append({
                     "id": eq.id,
                     "equation": eq.get_equation_string(),
-                    "root": eq.root1_real if eq.root1_real else 0
+                    "root": eq.root1 if eq.root1 else 0
                 })
             
             # Factorable equations (integer roots)
-            if eq.root1_real and eq.root1_imag == 0 and eq.root2_real and eq.root2_imag == 0:
-                if eq.root1_real.is_integer() and eq.root2_real.is_integer():
+            if eq.root1 is not None and eq.root1_imag == 0 and eq.root2 is not None and eq.root2_imag == 0:
+                if eq.root1.is_integer() and eq.root2.is_integer():
                     patterns["factorable_equations"].append({
                         "id": eq.id,
                         "equation": eq.get_equation_string(),
-                        "roots": [eq.root1_real, eq.root2_real]
+                        "roots": [eq.root1, eq.root2]
                     })
             
             # Integer vs decimal coefficients
@@ -262,8 +262,8 @@ class EquationExporter:
                 "coefficients": {"a": eq.a, "b": eq.b, "c": eq.c},
                 "discriminant": eq.discriminant,
                 "roots": {
-                    "root1": {"real": eq.root1_real, "imag": eq.root1_imag},
-                    "root2": {"real": eq.root2_real, "imag": eq.root2_imag}
+                    "root1": {"real": eq.root1, "imag": eq.root1_imag},
+                    "root2": {"real": eq.root2, "imag": eq.root2_imag}
                 },
                 "vertex": {"x": eq.vertex_x, "y": eq.vertex_y},
                 "roots_type": eq.get_roots_type(),
@@ -297,8 +297,8 @@ class EquationExporter:
                 eq.get_equation_string(),
                 eq.a, eq.b, eq.c,
                 eq.discriminant,
-                eq.root1_real, eq.root1_imag,
-                eq.root2_real, eq.root2_imag,
+                eq.root1, eq.root1_imag,
+                eq.root2, eq.root2_imag,
                 eq.vertex_x, eq.vertex_y,
                 eq.get_roots_type(),
                 eq.get_direction(),

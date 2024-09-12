@@ -201,6 +201,9 @@
                 <button type="button" class="btn btn-sm btn-outline-warning" id="clearComparisonBtn">
                     <i class="fas fa-trash"></i>
                 </button>
+                <button type="button" class="btn btn-sm btn-outline-info" id="regenerateBtn">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
                 <button type="button" class="btn btn-sm btn-outline-success" id="exportGraphBtn">
                     <i class="fas fa-download"></i>
                 </button>
@@ -268,11 +271,26 @@ $(document).ready(function() {
     });
     
     $('#zoomOutBtn').on('click', function() {
-        if (currentPlot) {
-            Plotly.relayout('interactivePlot', {
-                'xaxis.range': [currentPlot.layout.xaxis.range[0] * 1.25, currentPlot.layout.xaxis.range[1] * 1.25],
-                'yaxis.range': [currentPlot.layout.yaxis.range[0] * 1.25, currentPlot.layout.yaxis.range[1] * 1.25]
-            });
+        if (currentPlot && window.currentEquationData) {
+            // Get current range or use default
+            var currentXMin = -5;
+            var currentXMax = 5;
+            
+            if (currentPlot.layout && currentPlot.layout.xaxis && currentPlot.layout.xaxis.range) {
+                currentXMin = currentPlot.layout.xaxis.range[0];
+                currentXMax = currentPlot.layout.xaxis.range[1];
+            }
+            
+            // Expand the range
+            var newXMin = currentXMin * 1.5;
+            var newXMax = currentXMax * 1.5;
+            
+            // Regenerate the plot with the new range
+            if (window.comparisonEquations && window.comparisonEquations.length > 0) {
+                regenerateComparisonPlotWithExpandedRange(newXMin, newXMax, window.currentEquationData);
+            } else {
+                regeneratePlotWithExpandedRange(newXMin, newXMax, window.currentEquationData);
+            }
         }
     });
     
@@ -317,6 +335,10 @@ $(document).ready(function() {
     
     $('#clearComparisonBtn').on('click', function() {
         clearComparisonEquations();
+    });
+    
+    $('#regenerateBtn').on('click', function() {
+        regenerateCurrentView();
     });
     
     // Advanced math methods
@@ -581,7 +603,132 @@ $(document).ready(function() {
         };
         
         Plotly.newPlot('interactivePlot', traces, layout, config);
-        currentPlot = { layout: layout };
+        currentPlot = { layout: layout, data: data };
+        
+        // Store the data for later use
+        window.currentEquationData = data;
+    }
+    
+    function regeneratePlotWithExpandedRange(xMin, xMax, data) {
+        var a = parseFloat($('#a').val());
+        var b = parseFloat($('#b').val());
+        var c = parseFloat($('#c').val());
+        
+        // Generate new x and y values for the expanded range
+        var x = [];
+        var y = [];
+        var step = (xMax - xMin) / 200; // 200 points for smooth curve
+        
+        for (var i = xMin; i <= xMax; i += step) {
+            x.push(i);
+            y.push(a * i * i + b * i + c);
+        }
+        
+        // Prepare traces
+        var traces = [];
+        
+        // Main function trace
+        traces.push({
+            x: x,
+            y: y,
+            type: 'scatter',
+            mode: 'lines',
+            name: data.equation.replace(' = 0', ''),
+            line: { color: '#2E86AB', width: 3 }
+        });
+        
+        // Real roots (only show if they're in the current range)
+        data.roots.forEach(function(root, index) {
+            var rootX = (typeof root === 'object' && root.imag === 0) ? root.real : root;
+            if (rootX >= xMin && rootX <= xMax) {
+                traces.push({
+                    x: [rootX],
+                    y: [0],
+                    type: 'scatter',
+                    mode: 'markers',
+                    name: 'Root ' + (index + 1) + ': ' + rootX.toFixed(3),
+                    marker: { color: 'red', size: 10 }
+                });
+            }
+        });
+        
+        // Vertex (only show if it's in the current range)
+        if (data.vertex[0] >= xMin && data.vertex[0] <= xMax) {
+            traces.push({
+                x: [data.vertex[0]],
+                y: [data.vertex[1]],
+                type: 'scatter',
+                mode: 'markers',
+                name: 'Vertex: (' + data.vertex[0].toFixed(3) + ', ' + data.vertex[1].toFixed(3) + ')',
+                marker: { color: 'green', size: 12, symbol: 'triangle-up' }
+            });
+        }
+        
+        // Add comparison equations if they exist
+        if (window.comparisonEquations && window.comparisonEquations.length > 0) {
+            window.comparisonEquations.forEach(function(eq, index) {
+                var eqX = [];
+                var eqY = [];
+                for (var i = xMin; i <= xMax; i += step) {
+                    eqX.push(i);
+                    eqY.push(eq.a * i * i + eq.b * i + eq.c);
+                }
+                
+                traces.push({
+                    x: eqX,
+                    y: eqY,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Eq ' + (index + 1) + ': ' + formatEquation(eq.a, eq.b, eq.c).replace(' = 0', ''),
+                    line: { 
+                        color: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'][index % 5],
+                        width: 2,
+                        dash: 'dash'
+                    }
+                });
+            });
+        }
+        
+        var layout = {
+            title: {
+                text: 'Interactive Graph: ' + data.equation,
+                font: { size: 16 }
+            },
+            xaxis: {
+                title: 'x',
+                showgrid: true,
+                zeroline: true,
+                zerolinecolor: 'black',
+                zerolinewidth: 1,
+                range: [xMin, xMax] // Set the current zoom range
+            },
+            yaxis: {
+                title: 'y',
+                showgrid: true,
+                zeroline: true,
+                zerolinecolor: 'black',
+                zerolinewidth: 1
+            },
+            hovermode: 'closest',
+            showlegend: true,
+            legend: {
+                x: 0.02,
+                y: 0.98,
+                bgcolor: 'rgba(255,255,255,0.8)'
+            }
+        };
+        
+        var config = {
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+            displaylogo: false,
+            autosizable: true,
+            useResizeHandler: true
+        };
+        
+        Plotly.newPlot('interactivePlot', traces, layout, config);
+        currentPlot = { layout: layout, data: data };
     }
     
     function initializeDarkMode() {
@@ -628,6 +775,7 @@ $(document).ready(function() {
     }
     
     function generateRandomEquation(difficulty) {
+        console.log('Generating random equation with difficulty:', difficulty);
         var a, b, c;
         
         if (difficulty === 'easy') {
@@ -648,6 +796,8 @@ $(document).ready(function() {
             c = (Math.random() * 20 - 10).toFixed(1); // -10 to 10
         }
         
+        console.log('Generated coefficients:', a, b, c);
+        
         // Fill the form
         $('#a').val(a);
         $('#b').val(b);
@@ -658,6 +808,7 @@ $(document).ready(function() {
         
         // Auto-solve the equation
         setTimeout(function() {
+            console.log('Auto-solving equation...');
             solveEquation();
         }, 1000);
     }
@@ -721,6 +872,52 @@ $(document).ready(function() {
             createInteractivePlot(currentData);
         }
         showNotification('Cleared all comparison equations', 'info');
+    }
+    
+    function regenerateCurrentView() {
+        if (window.currentEquationData) {
+            // Get current zoom range from the plot
+            var plotElement = document.getElementById('interactivePlot');
+            
+            // Try to get the current range from the plot
+            var currentRange = null;
+            try {
+                var plotData = plotElement.data;
+                if (plotData && plotData.length > 0) {
+                    // Get the range from the first trace
+                    var xValues = plotData[0].x;
+                    if (xValues && xValues.length > 0) {
+                        var xMin = Math.min(...xValues);
+                        var xMax = Math.max(...xValues);
+                        currentRange = { min: xMin, max: xMax };
+                    }
+                }
+            } catch (e) {
+                console.log('Could not get current range:', e);
+            }
+            
+            if (currentRange) {
+                console.log('Manually regenerating with range:', currentRange.min, 'to', currentRange.max);
+                
+                // Check if we have comparison equations
+                if (window.comparisonEquations && window.comparisonEquations.length > 0) {
+                    regenerateComparisonPlotWithExpandedRange(currentRange.min, currentRange.max, window.currentEquationData);
+                } else {
+                    regeneratePlotWithExpandedRange(currentRange.min, currentRange.max, window.currentEquationData);
+                }
+                showNotification('Graph regenerated for current view', 'success');
+            } else {
+                // No specific range, regenerate with default
+                if (window.comparisonEquations && window.comparisonEquations.length > 0) {
+                    updatePlotWithComparison();
+                } else {
+                    createInteractivePlot(window.currentEquationData);
+                }
+                showNotification('Graph regenerated with default range', 'success');
+            }
+        } else {
+            showNotification('No equation data available to regenerate', 'error');
+        }
     }
     
     function updatePlotWithComparison() {
@@ -857,7 +1054,132 @@ $(document).ready(function() {
         };
         
         Plotly.newPlot('interactivePlot', traces, layout, config);
-        currentPlot = { layout: layout };
+        currentPlot = { layout: layout, data: currentData };
+        
+        // Store the data for later use
+        window.currentEquationData = currentData;
+    }
+    
+    function regenerateComparisonPlotWithExpandedRange(xMin, xMax, data) {
+        var a = parseFloat($('#a').val());
+        var b = parseFloat($('#b').val());
+        var c = parseFloat($('#c').val());
+        
+        // Generate new x and y values for the expanded range
+        var x = [];
+        var y = [];
+        var step = (xMax - xMin) / 200; // 200 points for smooth curve
+        
+        for (var i = xMin; i <= xMax; i += step) {
+            x.push(i);
+            y.push(a * i * i + b * i + c);
+        }
+        
+        // Prepare traces
+        var traces = [];
+        
+        // Main function trace
+        traces.push({
+            x: x,
+            y: y,
+            type: 'scatter',
+            mode: 'lines',
+            name: data.equation.replace(' = 0', ''),
+            line: { color: '#2E86AB', width: 3 }
+        });
+        
+        // Add comparison equations
+        if (window.comparisonEquations && window.comparisonEquations.length > 0) {
+            window.comparisonEquations.forEach(function(eq, index) {
+                var eqX = [];
+                var eqY = [];
+                for (var i = xMin; i <= xMax; i += step) {
+                    eqX.push(i);
+                    eqY.push(eq.a * i * i + eq.b * i + eq.c);
+                }
+                
+                traces.push({
+                    x: eqX,
+                    y: eqY,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Eq ' + (index + 1) + ': ' + formatEquation(eq.a, eq.b, eq.c).replace(' = 0', ''),
+                    line: { 
+                        color: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'][index % 5],
+                        width: 2,
+                        dash: 'dash'
+                    }
+                });
+            });
+        }
+        
+        // Real roots (only show if they're in the current range)
+        data.roots.forEach(function(root, index) {
+            var rootX = (typeof root === 'object' && root.imag === 0) ? root.real : root;
+            if (rootX >= xMin && rootX <= xMax) {
+                traces.push({
+                    x: [rootX],
+                    y: [0],
+                    type: 'scatter',
+                    mode: 'markers',
+                    name: 'Root ' + (index + 1) + ': ' + rootX.toFixed(3),
+                    marker: { color: 'red', size: 10 }
+                });
+            }
+        });
+        
+        // Vertex (only show if it's in the current range)
+        if (data.vertex[0] >= xMin && data.vertex[0] <= xMax) {
+            traces.push({
+                x: [data.vertex[0]],
+                y: [data.vertex[1]],
+                type: 'scatter',
+                mode: 'markers',
+                name: 'Vertex: (' + data.vertex[0].toFixed(3) + ', ' + data.vertex[1].toFixed(3) + ')',
+                marker: { color: 'green', size: 12, symbol: 'triangle-up' }
+            });
+        }
+        
+        var layout = {
+            title: {
+                text: 'Equation Comparison',
+                font: { size: 16 }
+            },
+            xaxis: {
+                title: 'x',
+                showgrid: true,
+                zeroline: true,
+                zerolinecolor: 'black',
+                zerolinewidth: 1,
+                range: [xMin, xMax] // Set the current zoom range
+            },
+            yaxis: {
+                title: 'y',
+                showgrid: true,
+                zeroline: true,
+                zerolinecolor: 'black',
+                zerolinewidth: 1
+            },
+            hovermode: 'closest',
+            showlegend: true,
+            legend: {
+                x: 0.02,
+                y: 0.98,
+                bgcolor: 'rgba(255,255,255,0.8)'
+            }
+        };
+        
+        var config = {
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+            displaylogo: false,
+            autosizable: true,
+            useResizeHandler: true
+        };
+        
+        Plotly.newPlot('interactivePlot', traces, layout, config);
+        currentPlot = { layout: layout, data: data };
     }
     
     function formatEquation(a, b, c) {
