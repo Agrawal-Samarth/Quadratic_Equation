@@ -150,10 +150,9 @@ except ImportError:
     # Session configuration with database
     SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
-# Performance optimizations
+# Performance optimizations for SQLite
 DATABASES['default']['OPTIONS'] = {
     'timeout': 20,
-    'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
 }
 
 # Logging configuration
