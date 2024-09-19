@@ -7,6 +7,7 @@ import time
 import logging
 from functools import wraps
 from django.core.cache import cache
+from django.core.cache.utils import make_template_fragment_key
 from django.db import connection
 from django.conf import settings
 import hashlib
@@ -88,15 +89,23 @@ class CacheManager:
             cache_key = f"equation_{CacheManager.generate_cache_key(*args, **kwargs)}"
             
             # Try to get from cache
-            cached_result = cache.get(cache_key)
-            if cached_result is not None:
-                logger.info(f"Cache hit for {func.__name__}")
-                return cached_result
+            try:
+                cached_result = cache.get(cache_key)
+                if cached_result is not None:
+                    logger.info(f"Cache hit for {func.__name__}")
+                    return cached_result
+            except Exception as e:
+                logger.warning(f"Cache get failed: {e}")
             
-            # Calculate and cache result
+            # Calculate result
             result = func(*args, **kwargs)
-            cache.set(cache_key, result, CacheManager.CACHE_TIMEOUT)
-            logger.info(f"Cached result for {func.__name__}")
+            
+            # Try to cache result
+            try:
+                cache.set(cache_key, result, CacheManager.CACHE_TIMEOUT)
+                logger.info(f"Cached result for {func.__name__}")
+            except Exception as e:
+                logger.warning(f"Cache set failed: {e}")
             
             return result
         return wrapper
@@ -104,13 +113,16 @@ class CacheManager:
     @staticmethod
     def invalidate_equation_cache(equation_id: int = None):
         """Invalidate equation-related cache entries"""
-        if equation_id:
-            # Invalidate specific equation cache
-            pattern = f"equation_*{equation_id}*"
-            cache.delete_many(cache.keys(pattern))
-        else:
-            # Invalidate all equation caches
-            cache.delete_many(cache.keys("equation_*"))
+        try:
+            if equation_id:
+                # Invalidate specific equation cache
+                pattern = f"equation_*{equation_id}*"
+                cache.delete_many(cache.keys(pattern))
+            else:
+                # Invalidate all equation caches
+                cache.delete_many(cache.keys("equation_*"))
+        except Exception as e:
+            logger.warning(f"Cache invalidation failed: {e}")
 
 
 class DatabaseOptimizer:
