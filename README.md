@@ -371,7 +371,6 @@ When reporting issues, please include:
 
 This project demonstrates the power of combining mathematics education with modern web technologies. From a simple Class 10 learning exercise, it has evolved into a comprehensive educational tool that makes quadratic equations accessible, interactive, and engaging for students worldwide.
 
-**Made with ❤️ for mathematics education**  
 *Transforming mathematical learning through technology*
 
 ---

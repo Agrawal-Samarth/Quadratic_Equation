@@ -461,6 +461,6 @@ The project is configured for Railway deployment:
 
 ---
 
-Thank you for contributing to make mathematics education more accessible and interactive! 🎓
+Thank you for contributing to this project! 🎓
 
 *This project started as a Class 10 learning exercise and has grown into a comprehensive educational tool. Your contributions help make math more engaging for students worldwide.*

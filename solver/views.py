@@ -3,6 +3,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.http import require_http_methods
 from .models import QuadraticEquation
 from .quadratic_solver import QuadraticEquationSolver
 import json
@@ -26,9 +27,15 @@ class QuadraticSolverView(View):
     def post(self, request):
         """Process the equation solving request."""
         try:
+            # Log the request for debugging
+            print(f"POST request received: {request.POST}")
+            print(f"Request headers: {request.META.get('HTTP_X_REQUESTED_WITH')}")
+            
             a = float(request.POST.get('a', 0))
             b = float(request.POST.get('b', 0))
             c = float(request.POST.get('c', 0))
+            
+            print(f"Parsed coefficients: a={a}, b={b}, c={c}")
             
             if a == 0:
                 return JsonResponse({
@@ -69,10 +76,14 @@ class QuadraticSolverView(View):
             })
             
         except ValueError as e:
+            print(f"ValueError: {e}")
             return JsonResponse({
                 'error': 'Please enter valid numbers for all coefficients'
             }, status=400)
         except Exception as e:
+            print(f"Exception in post method: {e}")
+            import traceback
+            traceback.print_exc()
             return JsonResponse({
                 'error': f'An error occurred: {str(e)}'
             }, status=500)

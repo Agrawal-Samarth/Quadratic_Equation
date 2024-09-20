@@ -365,37 +365,119 @@ $(document).ready(function() {
         $('#results').hide();
         
         // Get form data
+        var a = parseFloat($('#a').val());
+        var b = parseFloat($('#b').val());
+        var c = parseFloat($('#c').val());
+        
+        // Validate input
+        if (isNaN(a) || isNaN(b) || isNaN(c)) {
+            showError('Please enter valid numbers for all coefficients.');
+            $('#loading').hide();
+            return;
+        }
+        
+        if (a === 0) {
+            showError('Coefficient "a" cannot be zero for a quadratic equation.');
+            $('#loading').hide();
+            return;
+        }
+        
         var formData = {
-            'a': $('#a').val(),
-            'b': $('#b').val(),
-            'c': $('#c').val(),
+            'a': a,
+            'b': b,
+            'c': c,
             'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
         };
         
-        // Send AJAX request
+        // Send AJAX request with better configuration
         $.ajax({
-            url: '',
+            url: window.location.pathname,
             type: 'POST',
             data: formData,
+            dataType: 'json',
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
             success: function(response) {
-                if (response.success) {
+                console.log('Success response:', response);
+                if (response && response.success) {
                     currentData = response;
                     displayResults(response);
                 } else {
-                    showError(response.error);
+                    var errorMsg = response && response.error ? response.error : 'Unknown error occurred.';
+                    showError(errorMsg);
                 }
             },
-            error: function(xhr) {
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', xhr, status, error);
                 var errorMsg = 'An error occurred while solving the equation.';
-                if (xhr.responseJSON && xhr.responseJSON.error) {
+                
+                if (xhr.status === 403) {
+                    errorMsg = 'CSRF token error. Please refresh the page and try again.';
+                } else if (xhr.status === 500) {
+                    errorMsg = 'Server error. Please try again later.';
+                } else if (xhr.status === 0) {
+                    errorMsg = 'Network error. Please check your connection and try again.';
+                } else if (xhr.responseJSON && xhr.responseJSON.error) {
                     errorMsg = xhr.responseJSON.error;
+                } else if (xhr.responseText) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.error) {
+                            errorMsg = response.error;
+                        }
+                    } catch (e) {
+                        errorMsg = 'Invalid response from server.';
+                    }
                 }
+                
+                // Try fallback: submit form normally
+                console.log('Attempting fallback form submission...');
+                tryFallbackSubmission(a, b, c);
+                
                 showError(errorMsg);
             },
             complete: function() {
                 $('#loading').hide();
             }
         });
+    }
+    
+    function tryFallbackSubmission(a, b, c) {
+        // Create a temporary form for fallback submission
+        var form = $('<form>', {
+            'method': 'POST',
+            'action': window.location.pathname
+        });
+        
+        form.append($('<input>', {
+            'type': 'hidden',
+            'name': 'a',
+            'value': a
+        }));
+        
+        form.append($('<input>', {
+            'type': 'hidden',
+            'name': 'b',
+            'value': b
+        }));
+        
+        form.append($('<input>', {
+            'type': 'hidden',
+            'name': 'c',
+            'value': c
+        }));
+        
+        form.append($('<input>', {
+            'type': 'hidden',
+            'name': 'csrfmiddlewaretoken',
+            'value': $('[name=csrfmiddlewaretoken]').val()
+        }));
+        
+        // Submit the form
+        $('body').append(form);
+        form.submit();
     }
     
     function displayResults(data) {
