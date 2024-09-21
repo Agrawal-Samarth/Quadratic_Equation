@@ -28,6 +28,20 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# CSRF settings for Railway deployment
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-86547.up.railway.app',
+    'https://*.up.railway.app',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+# Additional CSRF settings for better compatibility
+CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_USE_SESSIONS = False
+
 
 # Application definition
 
