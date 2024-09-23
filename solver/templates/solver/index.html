@@ -416,7 +416,17 @@ $(document).ready(function() {
                 if (xhr.status === 403) {
                     errorMsg = 'CSRF token error. Please refresh the page and try again.';
                 } else if (xhr.status === 500) {
-                    errorMsg = 'Server error. Please try again later.';
+                    // Check if it's a complex roots error
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMsg = xhr.responseJSON.error;
+                        // If it's a complex roots error, don't try fallback
+                        if (errorMsg.includes('complex roots')) {
+                            showError(errorMsg);
+                            return;
+                        }
+                    } else {
+                        errorMsg = 'Server error. Please try again later.';
+                    }
                 } else if (xhr.status === 0) {
                     errorMsg = 'Network error. Please check your connection and try again.';
                 } else if (xhr.responseJSON && xhr.responseJSON.error) {
@@ -432,9 +442,11 @@ $(document).ready(function() {
                     }
                 }
                 
-                // Try fallback: submit form normally
-                console.log('Attempting fallback form submission...');
-                tryFallbackSubmission(a, b, c);
+                // Try fallback: submit form normally (only for non-complex root errors)
+                if (!errorMsg.includes('complex roots')) {
+                    console.log('Attempting fallback form submission...');
+                    tryFallbackSubmission(a, b, c);
+                }
                 
                 showError(errorMsg);
             },
@@ -513,12 +525,17 @@ $(document).ready(function() {
         var rootsHtml = '';
         roots.forEach(function(root, index) {
             if (typeof root === 'object' && root.real !== undefined) {
-                if (root.imag === 0) {
-                    rootsHtml += '<p class="mb-1">Root ' + (index + 1) + ': ' + root.real.toFixed(6) + '</p>';
+                if (root.is_complex && root.imag !== 0) {
+                    // Complex root
+                    var sign = root.imag >= 0 ? ' + ' : ' - ';
+                    var imagPart = Math.abs(root.imag).toFixed(6);
+                    rootsHtml += '<p class="mb-1">Root ' + (index + 1) + ': ' + root.real.toFixed(6) + sign + imagPart + 'i</p>';
                 } else {
-                    rootsHtml += '<p class="mb-1">Root ' + (index + 1) + ': ' + root.real.toFixed(6) + ' + ' + root.imag.toFixed(6) + 'i</p>';
+                    // Real root
+                    rootsHtml += '<p class="mb-1">Root ' + (index + 1) + ': ' + root.real.toFixed(6) + '</p>';
                 }
             } else {
+                // Fallback for old format
                 rootsHtml += '<p class="mb-1">Root ' + (index + 1) + ': ' + root.toFixed(6) + '</p>';
             }
         });

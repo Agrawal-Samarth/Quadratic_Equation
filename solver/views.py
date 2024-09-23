@@ -62,6 +62,22 @@ class QuadraticSolverView(View):
             # Generate plot
             plot_data = self.generate_plot(solver, result)
             
+            # Convert complex roots to JSON-serializable format
+            serializable_roots = []
+            for root in result['roots']:
+                if isinstance(root, complex):
+                    serializable_roots.append({
+                        'real': root.real,
+                        'imag': root.imag,
+                        'is_complex': True
+                    })
+                else:
+                    serializable_roots.append({
+                        'real': float(root),
+                        'imag': 0.0,
+                        'is_complex': False
+                    })
+            
             return JsonResponse({
                 'success': True,
                 'equation': equation.get_equation_string(),
@@ -70,7 +86,7 @@ class QuadraticSolverView(View):
                 'direction': result['direction'],
                 'vertex': result['vertex'],
                 'axis_of_symmetry': result['axis_of_symmetry'],
-                'roots': result['roots'],
+                'roots': serializable_roots,
                 'plot': plot_data,
                 'equation_id': equation.id
             })
@@ -84,8 +100,19 @@ class QuadraticSolverView(View):
             print(f"Exception in post method: {e}")
             import traceback
             traceback.print_exc()
+            
+            # Provide more user-friendly error messages
+            error_message = "An unexpected error occurred while solving the equation."
+            if "complex" in str(e).lower() and "serializable" in str(e).lower():
+                error_message = "The equation has complex roots. The graph will still be displayed, but complex roots cannot be shown in the current format."
+            elif "division by zero" in str(e).lower():
+                error_message = "Invalid equation: Division by zero occurred."
+            elif "invalid" in str(e).lower():
+                error_message = "Invalid input values. Please check your coefficients."
+            
             return JsonResponse({
-                'error': f'An error occurred: {str(e)}'
+                'error': error_message,
+                'technical_error': str(e) if DEBUG else None
             }, status=500)
     
     def get_client_ip(self, request):
